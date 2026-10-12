@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나의 운세 보기</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --blue: #1a5cff;
+    --blue-dark: #0a47e0;
+    --panel: #6a96ff;
+    --panel-deep: #4f7ff5;
+    --ink: #1d1d1f;
+    --sub: #5b5f69;
+    --line: #e3e5ea;
+    --soft: #f4f7ff;
+    --hl: #fff6d6;
+    --hl-line: #f2c94c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #fff; color: var(--ink);
+    font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 16px; }
+
+  /* 상단 옵션 패널 */
+  .panel { background: var(--panel); }
+  .panel .wrap { padding-top: 40px; padding-bottom: 44px; }
+  .panel h2 { margin: 0 0 22px; color: #fff; font-size: 18px; font-weight: 600; }
+  .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .opt {
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: 26px 16px 22px; border: 0; border-radius: 10px; cursor: pointer;
+    background: rgba(255,255,255,.14); color: #fff; font: inherit;
+    transition: background .15s, transform .15s;
+  }
+  .opt:hover { background: rgba(255,255,255,.24); }
+  .opt svg { width: 72px; height: 72px; }
+  .opt .label {
+    width: 100%; max-width: 220px; padding: 11px 0; border-radius: 4px;
+    background: #fff; color: #444; font-size: 16px;
+  }
+  .opt[aria-pressed="true"] { background: rgba(255,255,255,.3); }
+  .opt[aria-pressed="true"] .label { background: var(--blue); color: #fff; font-weight: 600; }
+
+  /* 소개 + 입력 */
+  .intro { padding: 56px 0 8px; }
+  .intro h1 { margin: 0 0 18px; font-size: 28px; font-weight: 600; }
+  .intro p { margin: 0; color: var(--sub); font-size: 16px; line-height: 1.8; }
+  .intro .note { margin-top: 10px; font-size: 14px; }
+  .intro .note b { color: var(--blue); font-weight: 500; }
+
+  .form { padding: 48px 0 0; }
+  .form h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+  .form .desc { margin: 0 0 16px; color: var(--sub); font-size: 14px; }
+  .table { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+  .row { display: grid; grid-template-columns: 175px 1fr; align-items: center; border-top: 1px solid var(--line); padding: 10px 14px; }
+  .row:first-child { border-top: 0; }
+  .row > label { font-weight: 600; font-size: 15px; }
+  .fields { display: flex; flex-wrap: wrap; gap: 9px; }
+  input[type=text], select {
+    height: 44px; min-width: 0; padding: 0 12px; border: 1px solid #c8ccd4; border-radius: 3px;
+    background: #fff; color: var(--ink); font: inherit; font-size: 15px;
+  }
+  input[type=text] { width: 360px; max-width: 100%; }
+  select { width: 175px; appearance: none; padding-right: 36px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='2.4'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; }
+  select.wide { width: 300px; }
+  input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -1px; border-color: var(--blue); }
+
+  .actions { text-align: center; padding: 56px 0 72px; }
+  .btn {
+    min-width: 176px; height: 56px; padding: 0 28px; border: 0; border-radius: 0;
+    background: var(--blue); color: #fff; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;
+  }
+  .btn:hover { background: var(--blue-dark); }
+  .btn:disabled { background: #9db6f5; cursor: progress; }
+  .error { margin: 16px 0 0; color: #d93025; font-size: 15px; min-height: 1em; }
+
+  /* 결과 */
+  #result { scroll-margin-top: 16px; }
+  .result { border-top: 2px solid var(--ink); padding: 40px 0 80px; }
+  .result-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  .result-head h2 { margin: 0; font-size: 26px; font-weight: 600; }
+  .result-head h2 em { font-style: normal; color: var(--blue); }
+  .score { display: flex; align-items: center; gap: 12px; color: var(--sub); font-size: 15px; }
+  .bar { width: 180px; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--blue); }
+  .score b { color: var(--ink); font-size: 22px; }
+  .sec { padding: 26px 0; border-top: 1px solid var(--line); }
+  .sec h3 { margin: 0 0 12px; font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .sec h3::before { content: ""; width: 4px; height: 18px; background: var(--blue); border-radius: 2px; }
+  .sec .headline { margin: 0 0 12px; padding: 12px 16px; background: var(--soft); border-radius: 6px; font-weight: 600; color: var(--blue-dark); }
+  .sec p { margin: 0 0 10px; color: #333; font-size: 16px; line-height: 1.85; word-break: keep-all; }
+
+  .summary { margin-top: 18px; padding: 26px 28px; background: var(--hl); border: 1px solid var(--hl-line); border-radius: 10px; }
+  .summary h3 { margin: 0 0 16px; font-size: 19px; font-weight: 700; }
+  .summary ol { margin: 0; padding: 0; list-style: none; counter-reset: s; }
+  .summary li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 8px; padding: 9px 0; font-size: 16px; line-height: 1.7; word-break: keep-all; }
+  .summary li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: var(--hl-line); color: #5a4300; font-weight: 700; font-size: 14px; display: grid; place-items: center; margin-top: 1px; }
+  .summary mark { background: linear-gradient(transparent 55%, #ffe58a 55%); color: inherit; font-weight: 600; }
+
+  .loading { padding: 60px 0 90px; text-align: center; color: var(--sub); }
+  .spinner { width: 40px; height: 40px; margin: 0 auto 16px; border: 4px solid var(--line); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 720px) {
+    .panel .wrap { padding-top: 28px; padding-bottom: 28px; }
+    .options { gap: 8px; }
+    .opt { padding: 16px 6px 14px; gap: 10px; }
+    .opt svg { width: 48px; height: 48px; }
+    .opt .label { font-size: 14px; padding: 9px 0; }
+    .intro { padding-top: 36px; }
+    .intro h1 { font-size: 23px; }
+    .row { grid-template-columns: 1fr; gap: 8px; padding: 14px 4px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+    input[type=text], select, select.wide { width: 100%; }
+    .fields > :only-child { grid-column: 1 / -1; }
+    .btn { width: 100%; }
+    .summary { padding: 20px 18px; }
+    .bar { width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<section class="panel">
+  <div class="wrap">
+    <h2>보고 싶은 운세를 선택하세요</h2>
+    <div class="options" role="group" aria-label="운세 선택">
+      <button type="button" class="opt" data-option="today" aria-pressed="true">
+        <svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="15" fill="#fff"/><g stroke="#ffe27a" stroke-width="4" stroke-linecap="round"><path d="M36 8v8M36 56v8M8 36h8M56 36h8M16 16l6 6M50 50l6 6M16 56l6-6M50 22l6-6"/></g><circle cx="36" cy="36" r="9" fill="#ffd23f"/></svg>
+        <span class="label">오늘의 운</span>
+      </button>
+      <button type="button" class="opt" data-option="caution" aria-pressed="false">
+        <svg viewBox="0 0 72 72" aria-hidden="true"><path d="M36 9l23 9v15c0 15-10 26-23 31-13-5-23-16-23-31V18z" fill="#fff"/><path d="M36 25v15" stroke="#ff6b6b" stroke-width="5" stroke-linecap="round"/><circle cx="36" cy="49" r="3.2" fill="#ff6b6b"/></svg>
+        <span class="label">조심해야 할 것</span>
+      </button>
+      <button type="button" class="opt" data-option="rich" aria-pressed="false">
+        <svg viewBox="0 0 72 72" aria-hidden="true"><ellipse cx="36" cy="50" rx="22" ry="8" fill="#e8b923"/><rect x="14" y="30" width="44" height="20" fill="#e8b923"/><ellipse cx="36" cy="30" rx="22" ry="8" fill="#ffd23f"/><ellipse cx="36" cy="30" rx="12" ry="4" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M58 12l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg>
+        <span class="label">부자되는 방법</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <section class="intro">
+    <h1 id="title"></h1>
+    <p id="desc"></p>
+    <p class="note">※ 입력하신 정보는 운세 풀이에만 사용됩니다. 결과를 불러오는 데 <b>20~40초</b> 정도 걸릴 수 있습니다.</p>
+  </section>
+
+  <form class="form" id="form" novalidate>
+    <h3>개인정보입력</h3>
+    <p class="desc">정확한 사주 분석을 위해 실제 생일정보를 입력하여 주시기 바랍니다.</p>
+    <div class="table">
+      <div class="row">
+        <label for="name">이름</label>
+        <div class="fields"><input type="text" id="name" name="name" maxlength="20" placeholder="이름을 입력하세요" autocomplete="name"></div>
+      </div>
+      <div class="row">
+        <label for="sex">성별</label>
+        <div class="fields">
+          <select id="sex" name="sex"><option value="">선택</option><option value="남">남자</option><option value="여">여자</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label for="solunar">생년월일</label>
+        <div class="fields">
+          <select id="solunar" name="solunar" aria-label="양/음력">
+            <option value="S_C">양력</option><option value="L_C">음력(평달)</option><option value="L_L">음력(윤달)</option>
+          </select>
+          <select id="year" name="year" aria-label="출생년"><option value="">출생년</option></select>
+          <select id="month" name="month" aria-label="출생월"><option value="">출생월</option></select>
+          <select id="day" name="day" aria-label="출생일"><option value="">출생일</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label for="hour">태어난 시간</label>
+        <div class="fields">
+          <select id="hour" name="hour" class="wide">
+            <option value="0">모름</option>
+            <option value="01">자시 (23:30 ~ 01:29)</option>
+            <option value="02">축시 (01:30 ~ 03:29)</option>
+            <option value="04">인시 (03:30 ~ 05:29)</option>
+            <option value="06">묘시 (05:30 ~ 07:29)</option>
+            <option value="08">진시 (07:30 ~ 09:29)</option>
+            <option value="10">사시 (09:30 ~ 11:29)</option>
+            <option value="12">오시 (11:30 ~ 13:29)</option>
+            <option value="14">미시 (13:30 ~ 15:29)</option>
+            <option value="16">신시 (15:30 ~ 17:29)</option>
+            <option value="18">유시 (17:30 ~ 19:29)</option>
+            <option value="20">술시 (19:30 ~ 21:29)</option>
+            <option value="22">해시 (21:30 ~ 23:29)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <p class="error" id="error" role="alert"></p>
+    <div class="actions"><button type="submit" class="btn" id="submit">운세보기</button></div>
+  </form>
+
+  <section id="result" aria-live="polite"></section>
+</main>
+
+<script>
+const INFO = {
+  today:   { title: "오늘의 운", desc: "오늘 하루의 총운과 애정·소망·사업·금전의 흐름을 살펴봅니다. 오늘 어떤 마음가짐으로 하루를 보내면 좋을지, 행운을 부르는 방향까지 알려드립니다." },
+  caution: { title: "조심해야 할 것", desc: "타고난 사주에서 특히 신경 써야 할 부분을 짚어봅니다. 건강과 체질, 재물이 새어나가는 길, 인연에서 주의할 점을 미리 알고 대비하세요." },
+  rich:    { title: "부자되는 방법", desc: "재물의 흐름을 파악하는 사주 분석! 나에게 타고난 재물운은 어떠한지, 돈을 모으는 법과 나에게 맞는 재테크 방법을 알려드립니다." },
+};
+const $ = (id) => document.getElementById(id);
+let option = "today";
+
+function selectOption(next) {
+  option = next;
+  document.querySelectorAll(".opt").forEach(b => b.setAttribute("aria-pressed", b.dataset.option === next));
+  $("title").textContent = INFO[next].title;
+  $("desc").textContent = INFO[next].desc;
+}
+document.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
+  selectOption(b.dataset.option);
+  $("result").innerHTML = "";
+}));
+selectOption("today");
+
+// 연/월/일 옵션 채우기
+const thisYear = new Date().getFullYear();
+for (let y = thisYear; y >= 1930; y--) $("year").add(new Option(y + "년", y));
+for (let m = 1; m <= 12; m++) $("month").add(new Option(m + "월", m));
+for (let d = 1; d <= 31; d++) $("day").add(new Option(d + "일", d));
+
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function render(r) {
+  const label = INFO[r.option].title;
+  const score = r.score != null
+    ? `<div class="score">오늘의 총운 <div class="bar"><i style="width:${Math.min(100, r.score)}%"></i></div><b>${r.score}점</b></div>` : "";
+  const secs = r.sections.map(s => `
+    <div class="sec">
+      <h3>${esc(s.title)}</h3>
+      ${s.headline ? `<p class="headline">${esc(s.headline)}</p>` : ""}
+      ${s.paragraphs.map(p => `<p>${esc(p)}</p>`).join("")}
+    </div>`).join("");
+  const summary = r.summary.length ? `
+    <div class="summary">
+      <h3>3줄 요약</h3>
+      <ol>${r.summary.map(s => `<li><span><mark>${esc(s)}</mark></span></li>`).join("")}</ol>
+    </div>` : "";
+  $("result").innerHTML = `
+    <div class="result">
+      <div class="result-head"><h2><em>${esc(r.name)}</em>님의 ${label}</h2>${score}</div>
+      ${secs}${summary}
+    </div>`;
+}
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  const missing = !data.name.trim() ? "이름을 입력해 주세요." : !data.sex ? "성별을 선택해 주세요."
+    : !(data.year && data.month && data.day) ? "생년월일을 선택해 주세요." : "";
+  $("error").textContent = missing;
+  if (missing) return;
+
+  $("submit").disabled = true;
+  $("result").innerHTML = `<div class="loading"><div class="spinner"></div>${esc(data.name)}님의 ${INFO[option].title}을(를) 풀이하고 있습니다...</div>`;
+  $("result").scrollIntoView({ behavior: "smooth" });
+  try {
+    const res = await fetch("/api/fortune", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...data, option }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "오류가 발생했습니다.");
+    render(json);
+    $("result").scrollIntoView({ behavior: "smooth" });
+  } catch (err) {
+    $("result").innerHTML = "";
+    $("error").textContent = err.message;
+  } finally {
+    $("submit").disabled = false;
+  }
+});
+</script>
+</body>
+</html>

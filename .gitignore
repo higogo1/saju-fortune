@@ -1,0 +1,6 @@
+# API 키
+.env
+# 크롤링 캐시 / 결과물
+cache/
+saju_result.*
+__pycache__/
