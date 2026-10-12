@@ -1,0 +1,8 @@
+name = "saju-fortune"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# 크롤링 결과 캐시 + IP별 하루 조회 횟수
+[[kv_namespaces]]
+binding = "CACHE"
+id = "KV_ID_PLACEHOLDER"

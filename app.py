@@ -16,7 +16,7 @@ import crawl_saju
 
 TODAY_FORM = "https://www.unsin.co.kr/unse/free/todayline/form?linenum=01&sid=tunse"
 TOTAL_FORM = crawl_saju.FORM_URL
-STATIC = Path(__file__).with_name("static")
+INDEX = Path(__file__).with_name("index.html")
 CACHE = Path(__file__).with_name("cache")
 
 HANJA = re.compile(r"[㐀-䶿一-鿿豈-﫿]+")
@@ -165,7 +165,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path in ("/", "/index.html"):
-            self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+            self._send(200, INDEX.read_bytes(), "text/html; charset=utf-8")
+        elif self.path == "/fortune.js":
+            self._send(200, INDEX.with_name("fortune.js").read_bytes(), "text/javascript; charset=utf-8")
         else:
             self._send(404, "not found", "text/plain; charset=utf-8")
 
